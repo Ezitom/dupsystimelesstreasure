@@ -412,38 +412,51 @@ app.post('/api/contact', async (req, res) => {
   });
 });
 
-// --- CLEAN URLS & STATIC FILE SERVING --- //
+// --- CLEAN URLS & STATIC FILE SERVING / HEALTH CHECK --- //
 
+const fs = require('fs');
 const frontendPath = path.join(__dirname, '../frontend');
+const hasFrontend = fs.existsSync(frontendPath);
 
-// Explicit route: /order/:reference resolves to frontend/order.html
-app.get('/order/:reference', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'order.html'));
-});
+if (hasFrontend) {
+  // Explicit route: /order/:reference resolves to frontend/order.html
+  app.get('/order/:reference', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'order.html'));
+  });
 
-app.get('/order', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'order.html'));
-});
+  app.get('/order', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'order.html'));
+  });
 
-// 301 Redirect Middleware: Any request ending in .html gets a 301 redirect to path without .html
-app.use((req, res, next) => {
-  if (req.path.endsWith('.html') && !req.path.startsWith('/api')) {
-    let cleanPath = req.path.slice(0, -5);
-    if (cleanPath === '/index') cleanPath = '/';
-    const queryString = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
-    return res.redirect(301, cleanPath + queryString);
-  }
-  next();
-});
+  // 301 Redirect Middleware: Any request ending in .html gets a 301 redirect to path without .html
+  app.use((req, res, next) => {
+    if (req.path.endsWith('.html') && !req.path.startsWith('/api')) {
+      let cleanPath = req.path.slice(0, -5);
+      if (cleanPath === '/index') cleanPath = '/';
+      const queryString = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+      return res.redirect(301, cleanPath + queryString);
+    }
+    next();
+  });
 
-// Serve frontend static directory
-app.use(express.static(frontendPath, { extensions: ['html'] }));
+  // Serve frontend static directory
+  app.use(express.static(frontendPath, { extensions: ['html'] }));
 
-// Catch-all for HTML requests to serve clean paths
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(frontendPath, 'index.html'));
-});
+  // Catch-all for HTML requests to serve clean paths
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+} else {
+  // Standalone Backend API Health Check
+  app.get('/', (req, res) => {
+    res.json({
+      status: 'online',
+      service: "Dupsy's Timeless Treasure Backend API",
+      timestamp: new Date().toISOString()
+    });
+  });
+}
 
 // Start Server
 app.listen(PORT, () => {
