@@ -20,13 +20,15 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('admin-login-alert').innerHTML = '';
 
       try {
-        const response = await fetch('/api/auth/login', {
+        const url = (typeof getApiUrl === 'function') ? getApiUrl('/api/auth/login') : '/api/auth/login';
+        const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: usernameInput, password: passwordInput })
         });
 
-        const data = await response.json();
+        const contentType = response.headers.get('content-type') || '';
+        const data = contentType.includes('application/json') ? await response.json() : {};
 
         if (!response.ok) {
           throw new Error(data.error || 'Login failed.');
@@ -62,7 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function verifyToken(token) {
   try {
-    const response = await fetch('/api/auth/verify', {
+    const url = (typeof getApiUrl === 'function') ? getApiUrl('/api/auth/verify') : '/api/auth/verify';
+    const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     return response.ok;
@@ -135,12 +138,14 @@ async function loadAdminBookings() {
 
   try {
     const token = localStorage.getItem('dtt_admin_token');
-    const response = await fetch('/api/bookings', {
+    const url = (typeof getApiUrl === 'function') ? getApiUrl('/api/bookings') : '/api/bookings';
+    const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
     if (!response.ok) throw new Error('Failed to load bookings');
-    const bookings = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    const bookings = contentType.includes('application/json') ? await response.json() : [];
 
     renderBookingsTable(bookings);
   } catch (err) {
@@ -374,7 +379,9 @@ async function savePickupDetails(id, pickup_location, pickup_contact_number) {
   }
   try {
     const token = localStorage.getItem('dtt_admin_token');
-    const response = await fetch(`/api/bookings/${id}/pickup`, {
+    const endpoint = `/api/bookings/${id}/pickup`;
+    const url = (typeof getApiUrl === 'function') ? getApiUrl(endpoint) : endpoint;
+    const response = await fetch(url, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -383,7 +390,8 @@ async function savePickupDetails(id, pickup_location, pickup_contact_number) {
       body: JSON.stringify({ pickup_location, pickup_contact_number })
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    const data = contentType.includes('application/json') ? await response.json() : {};
     if (!response.ok) throw new Error(data.error || 'Failed to save pickup details');
 
     showAlert('admin-dash-alert', 'Pickup details saved successfully.', 'success');
@@ -414,7 +422,9 @@ async function updateBookingStatus(id, status) {
 
   try {
     const token = localStorage.getItem('dtt_admin_token');
-    const response = await fetch(`/api/bookings/${id}/status`, {
+    const endpoint = `/api/bookings/${id}/status`;
+    const url = (typeof getApiUrl === 'function') ? getApiUrl(endpoint) : endpoint;
+    const response = await fetch(url, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -423,7 +433,8 @@ async function updateBookingStatus(id, status) {
       body: JSON.stringify({ status })
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    const data = contentType.includes('application/json') ? await response.json() : {};
 
     if (!response.ok) throw new Error(data.error || 'Failed to update status');
 
@@ -444,9 +455,11 @@ async function loadAdminProducts() {
   tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2rem;">Loading catalog...</td></tr>`;
 
   try {
-    const response = await fetch('/api/products');
+    const url = (typeof getApiUrl === 'function') ? getApiUrl('/api/products') : '/api/products';
+    const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to load products');
-    const products = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    const products = contentType.includes('application/json') ? await response.json() : [];
 
     renderProductsTable(products);
   } catch (err) {
@@ -534,7 +547,8 @@ function initProductModal() {
 
     try {
       const token = localStorage.getItem('dtt_admin_token');
-      const url = mode === 'add' ? '/api/products' : `/api/products/${prodId}`;
+      const endpoint = mode === 'add' ? '/api/products' : `/api/products/${prodId}`;
+      const url = (typeof getApiUrl === 'function') ? getApiUrl(endpoint) : endpoint;
       const method = mode === 'add' ? 'POST' : 'PUT';
 
       const response = await fetch(url, {
@@ -546,7 +560,8 @@ function initProductModal() {
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      const data = contentType.includes('application/json') ? await response.json() : {};
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to save product');
@@ -593,7 +608,9 @@ function openProductModal(mode, product = null) {
 async function deleteProduct(id) {
   try {
     const token = localStorage.getItem('dtt_admin_token');
-    const response = await fetch(`/api/products/${id}`, {
+    const endpoint = `/api/products/${id}`;
+    const url = (typeof getApiUrl === 'function') ? getApiUrl(endpoint) : endpoint;
+    const response = await fetch(url, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });

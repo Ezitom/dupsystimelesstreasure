@@ -19,9 +19,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    const response = await fetch(`/api/products/${productId}`);
+    const endpoint = `/api/products/${productId}`;
+    const url = (typeof getApiUrl === 'function') ? getApiUrl(endpoint) : endpoint;
+    const response = await fetch(url);
     if (!response.ok) throw new Error('Product not found');
-    const product = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    const product = contentType.includes('application/json') ? await response.json() : null;
+    if (!product) throw new Error('Invalid product data');
 
     document.title = `${product.name} - Dupsy's Timeless Treasure`;
 

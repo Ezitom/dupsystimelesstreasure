@@ -41,8 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
     resultContainer.style.display = 'none';
 
     try {
-      const response = await fetch(`/api/bookings/track?reference=${encodeURIComponent(reference)}&identifier=${encodeURIComponent(identifier)}`);
-      const data = await response.json();
+      const endpoint = `/api/bookings/track?reference=${encodeURIComponent(reference)}&identifier=${encodeURIComponent(identifier)}`;
+      const url = (typeof getApiUrl === 'function') ? getApiUrl(endpoint) : endpoint;
+      const response = await fetch(url);
+      const contentType = response.headers.get('content-type') || '';
+      const data = contentType.includes('application/json') ? await response.json() : {};
 
       if (!response.ok) {
         throw new Error(data.error || 'No booking found matching those details.');

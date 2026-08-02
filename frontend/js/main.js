@@ -1,5 +1,14 @@
 // Dupsy's Timeless Treasure - Main JavaScript Utilities
 
+// Dynamic Centralized API Base URL for Netlify, Render & Local Dev
+function getApiUrl(endpoint) {
+  const isNetlify = window.location.hostname.includes('netlify.app');
+  const baseUrl = isNetlify ? 'https://dupsystimelesstreasure.onrender.com' : '';
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return `${baseUrl}${cleanEndpoint}`;
+}
+window.getApiUrl = getApiUrl;
+
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initActiveNav();

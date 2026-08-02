@@ -60,13 +60,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     try {
-      const response = await fetch('/api/paystack/initialize', {
+      const url = (typeof getApiUrl === 'function') ? getApiUrl('/api/paystack/initialize') : '/api/paystack/initialize';
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      const data = contentType.includes('application/json') ? await response.json() : {};
 
       if (!response.ok || !data.success) {
         throw new Error(data.error || 'Failed to initialize Paystack checkout.');

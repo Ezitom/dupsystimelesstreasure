@@ -39,10 +39,12 @@ async function loadProducts(container, category = 'all') {
   container.innerHTML = `<div class="catalog-state-msg">Loading collection...</div>`;
   
   try {
-    const url = category && category !== 'all' ? `/api/products?category=${category}` : '/api/products';
+    const endpoint = category && category !== 'all' ? `/api/products?category=${category}` : '/api/products';
+    const url = (typeof getApiUrl === 'function') ? getApiUrl(endpoint) : endpoint;
     const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch products');
-    const products = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    const products = contentType.includes('application/json') ? await response.json() : [];
 
     renderProducts(container, products);
   } catch (err) {
@@ -53,9 +55,11 @@ async function loadProducts(container, category = 'all') {
 
 async function loadFeaturedProducts(container) {
   try {
-    const response = await fetch('/api/products');
+    const url = (typeof getApiUrl === 'function') ? getApiUrl('/api/products') : '/api/products';
+    const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch products');
-    const products = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    const products = contentType.includes('application/json') ? await response.json() : [];
     
     // Display top 3 featured products
     renderProducts(container, products.slice(0, 3));
