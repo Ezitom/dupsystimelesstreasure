@@ -4,8 +4,6 @@ const path = require('path');
 // Dynamically create or refresh Nodemailer Transporter using current .env
 function getTransporter() {
   require('dotenv').config({ path: path.join(__dirname, '../.env'), override: true });
-  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const port = parseInt(process.env.SMTP_PORT || '465', 10);
   const user = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER;
   let pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_PASS;
 
@@ -15,14 +13,25 @@ function getTransporter() {
   }
 
   if (user && pass) {
+    // If a custom SMTP_HOST is explicitly provided (e.g. non-Gmail provider), use host/port
+    if (process.env.SMTP_HOST && process.env.SMTP_HOST !== 'smtp.gmail.com') {
+      const host = process.env.SMTP_HOST;
+      const port = parseInt(process.env.SMTP_PORT || '587', 10);
+      return nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass },
+        tls: { rejectUnauthorized: false }
+      });
+    }
+
+    // Recommended for Gmail on Cloud Hosts (Render/Heroku/AWS):
+    // Using service: 'gmail' automatically uses Port 587 STARTTLS, bypassing cloud Port 465 blocking.
     return nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465, // true for 465 SSL, false for 587 STARTTLS
+      service: 'gmail',
       auth: { user, pass },
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000,
-      socketTimeout: 15000
+      tls: { rejectUnauthorized: false }
     });
   }
 
