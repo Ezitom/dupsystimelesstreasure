@@ -1,0 +1,14 @@
+# Netlify Redirects for API Proxying to Render Backend
+/api/*  https://dupsys-timeless-treasure.onrender.com/api/:splat  200
+
+# HTML5 Clean URLs support
+/about             /about.html             200
+/booking           /booking.html           200
+/collections       /collections.html       200
+/contact           /contact.html           200
+/order             /order.html             200
+/order/*           /order.html             200
+/product           /product.html           200
+/track-order       /track-order.html       200
+/admin/login       /admin/login.html       200
+/admin/dashboard   /admin/dashboard.html   200
