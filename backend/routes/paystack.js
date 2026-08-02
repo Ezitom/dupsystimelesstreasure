@@ -64,9 +64,8 @@ function verifyPaystackSignature(req) {
 module.exports = function(supabase, memoryStore) {
 
   function getMagicLink(req, reference) {
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
-    const host = req.get('host') || 'localhost:5000';
-    return `${protocol}://${host}/order/${reference}`;
+    const baseUrl = process.env.FRONTEND_URL || 'https://dupsystimelesstreasure.netlify.app';
+    return `${baseUrl}/order/${reference}`;
   }
 
   // 1. GET /api/paystack/config - Expose public key if needed by frontend
@@ -205,9 +204,8 @@ module.exports = function(supabase, memoryStore) {
     }
 
     // Initialize Paystack Transaction
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
-    const host = req.get('host') || 'localhost:5000';
-    const callbackUrl = `${protocol}://${host}/order/${ref}?payment=verify`;
+    const frontendUrl = process.env.FRONTEND_URL || 'https://dupsystimelesstreasure.netlify.app';
+    const callbackUrl = `${frontendUrl}/order/${ref}?payment=verify`;
 
     const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
 
