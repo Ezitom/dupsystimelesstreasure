@@ -414,6 +414,16 @@ app.post('/api/contact', async (req, res) => {
 
 // --- CLEAN URLS & STATIC FILE SERVING / HEALTH CHECK --- //
 
+// Root Path: Always return Backend API status message
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    service: "Dupsy's Timeless Treasure Backend API",
+    message: "Backend server is running successfully.",
+    timestamp: new Date().toISOString()
+  });
+});
+
 const fs = require('fs');
 const frontendPath = path.join(__dirname, '../frontend');
 const hasFrontend = fs.existsSync(frontendPath);
@@ -446,15 +456,6 @@ if (hasFrontend) {
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
     res.sendFile(path.join(frontendPath, 'index.html'));
-  });
-} else {
-  // Standalone Backend API Health Check
-  app.get('/', (req, res) => {
-    res.json({
-      status: 'online',
-      service: "Dupsy's Timeless Treasure Backend API",
-      timestamp: new Date().toISOString()
-    });
   });
 }
 
