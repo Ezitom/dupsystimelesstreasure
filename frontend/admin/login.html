@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal - Dupsy's Timeless Treasure</title>
+  <meta name="description" content="Business owner portal authentication for Dupsy's Timeless Treasure.">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body style="display: flex; flex-direction: column; min-height: 100vh;">
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="container nav-wrapper">
+      <a href="/" class="brand-logo" id="header-brand-logo">
+        <img src="/images/dupsys-logo-transparent-black.png" alt="Dupsy's Timeless Treasure" class="brand-logo-img">
+      </a>
+
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" id="theme-toggle-main" aria-label="Toggle Theme"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg></button>
+        <a href="/" class="btn btn-outline btn-sm" id="admin-login-back-home">Back to Site</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Login Section -->
+  <section class="section-padding" style="flex: 1; display: flex; align-items: center;">
+    <div class="container">
+      
+      <div id="admin-login-alert"></div>
+
+      <form id="admin-login-form" class="form-card" style="max-width: 460px;">
+        <div class="text-center" style="margin-bottom: 2rem;">
+          <span class="section-subtitle">Owner Authentication</span>
+          <h1 style="font-size: 2rem;">Store Admin Sign In</h1>
+          <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+            Authorized management portal access only.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="admin-username">Username</label>
+          <input type="text" id="admin-username" class="form-control" placeholder="admin" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="admin-password">Password</label>
+          <input type="password" id="admin-password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top: 1rem;" id="btn-admin-login">
+          Sign In to Dashboard
+        </button>
+
+        <div class="text-center" style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-muted);">
+          Protected Admin Area • <a href="/" class="text-gold">Return to Main Website</a>
+        </div>
+      </form>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer" style="padding: 2rem 0;">
+    <div class="container footer-bottom" style="border-top: none; padding-top: 0;">
+      <div>&copy; 2026 Dupsy's Timeless Treasure Management.</div>
+      <div>Store Security Portal</div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

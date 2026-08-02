@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reserve Booking & Fitting - Dupsy's Timeless Treasure</title>
+  <meta name="description" content="Book a fitting appointment or request custom jewelry delivery. No customer account creation required. Receive a unique tracking reference code.">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="container nav-wrapper">
+      <a href="/" class="brand-logo" id="header-brand-logo">
+        <img src="/images/dupsys-logo-transparent-black.png" alt="Dupsy's Timeless Treasure" class="brand-logo-img">
+      </a>
+
+      <nav>
+        <ul class="nav-menu" id="header-nav-menu">
+          <li><a href="/" class="nav-link" id="nav-home">Home</a></li>
+          <li><a href="/about" class="nav-link" id="nav-about">About</a></li>
+          <li><a href="/booking" class="nav-link active" id="nav-booking">Book Fitting</a></li>
+          <li><a href="/track-order" class="nav-link" id="nav-track">Track Order</a></li>
+          <li><a href="/collections" class="nav-link" id="nav-collections">Collections</a></li>
+          <li><a href="/contact" class="nav-link" id="nav-contact">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" id="theme-toggle-main" aria-label="Toggle Theme"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg></button>
+        <a href="/admin/login" class="btn btn-outline btn-sm" id="nav-admin-login">Admin</a>
+        <button class="mobile-nav-toggle" id="mobile-menu-btn" aria-label="Open Navigation Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Banner -->
+  <section class="page-banner">
+    <div class="container">
+      <span class="section-subtitle">Private Service</span>
+      <h1 class="section-title">Reserve Booking & Delivery</h1>
+      <p class="page-banner-desc">
+        No registration required. Complete your request below to receive your unique tracking reference code.
+      </p>
+    </div>
+  </section>
+
+  <!-- Booking Form Section -->
+  <section class="section-padding">
+    <div class="container">
+      
+      <div id="booking-alert-container"></div>
+      <div id="booking-result-box" class="form-card" style="display: none;"></div>
+
+      <form id="booking-form" class="form-card">
+        <input type="hidden" id="booking-product-id" name="product_id" value="">
+
+        <div class="form-group">
+          <label class="form-label" for="booking-product-name">Jewelry Piece or Consultation Service</label>
+          <input type="text" id="booking-product-name" name="product_name" class="form-control" placeholder="e.g. Sovereign Solitaire Ring or Custom Design" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="booking-full-name">Full Name</label>
+            <input type="text" id="booking-full-name" name="full_name" class="form-control" placeholder="Elena Rostova" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="booking-phone">Phone Number <span class="text-muted">(include country code for WhatsApp updates)</span></label>
+            <input type="tel" id="booking-phone" name="phone" class="form-control" placeholder="+2348012345678 or +15551234567" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="booking-email">Email Address</label>
+            <input type="email" id="booking-email" name="email" class="form-control" placeholder="elena@example.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="booking-category">Category Focus</label>
+            <select id="booking-category" name="category" class="form-control" required>
+              <option value="rings">Rings</option>
+              <option value="necklaces">Necklaces</option>
+              <option value="bracelets">Bracelets</option>
+              <option value="earrings">Earrings</option>
+              <option value="custom" selected>Custom Order</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="booking-date">Preferred Fitting / Delivery Date</label>
+            <input type="date" id="booking-date" name="preferred_date" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="booking-address">Delivery / Fitting Address</label>
+            <input type="text" id="booking-address" name="address" class="form-control" placeholder="Full street address, city, state" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="booking-nearest-park">Nearest Motor Park / Pickup Station <span class="text-muted">(for park delivery/pickup)</span></label>
+          <input type="text" id="booking-nearest-park" name="nearest_park" class="form-control" placeholder="e.g. Jibowu Park, Peace Mass Transit, God is Good Motors, Ojota Motor Park" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="booking-notes">Special Instructions or Sizing Notes</label>
+          <textarea id="booking-notes" name="notes" class="form-control" placeholder="Provide ring sizes, preferred gold carat, custom engraving text, or specific appointment requests..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" id="btn-submit-booking">
+          Proceed to Checkout (Paystack)
+        </button>
+      </form>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <a href="/" class="brand-logo footer-brand" id="footer-brand-logo">
+          <img src="/images/dupsys-logo-transparent-black.png" alt="Dupsy's Timeless Treasure" class="brand-logo-img">
+        </a>
+        <p>
+          Creating heirloom fine jewelry crafted with unyielding dedication to luxury, technique, and personal milestone moments.
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Navigation</h4>
+        <ul class="footer-links">
+          <li><a href="/" id="footer-link-home">Home</a></li>
+          <li><a href="/collections" id="footer-link-collections">Collections</a></li>
+          <li><a href="/booking" id="footer-link-booking">Book Fitting</a></li>
+          <li><a href="/track-order" id="footer-link-track">Track Order</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Information</h4>
+        <ul class="footer-links">
+          <li><a href="/about" id="footer-link-about">About Us</a></li>
+          <li><a href="/contact" id="footer-link-contact">Contact & Inquiry</a></li>
+          <li><a href="/admin/login" id="footer-link-admin">Admin Dashboard</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Store Hours</h4>
+        <p class="footer-hours-text">
+          Monday to Saturday: 10:00 AM - 6:00 PM<br>
+          Online Orders 24/7
+        </p>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <div>&copy; 2026 Dupsy's Timeless Treasure. All Rights Reserved.</div>
+      <div>Designed for Fine Jewelry Admirers.</div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/booking.js"></script>
+</body>
+</html>

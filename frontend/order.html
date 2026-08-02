@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Status - Dupsy's Timeless Treasure</title>
+  <meta name="description" content="View your order fitting progress, status updates, and payment details for Dupsy's Timeless Treasure.">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="container nav-wrapper">
+      <a href="/" class="brand-logo" id="header-brand-logo">
+        <img src="/images/dupsys-logo-transparent-black.png" alt="Dupsy's Timeless Treasure" class="brand-logo-img">
+      </a>
+
+      <nav>
+        <ul class="nav-menu" id="header-nav-menu">
+          <li><a href="/" class="nav-link" id="nav-home">Home</a></li>
+          <li><a href="/about" class="nav-link" id="nav-about">About</a></li>
+          <li><a href="/booking" class="nav-link" id="nav-booking">Book Fitting</a></li>
+          <li><a href="/track-order" class="nav-link" id="nav-track">Track Order</a></li>
+          <li><a href="/collections" class="nav-link" id="nav-collections">Collections</a></li>
+          <li><a href="/contact" class="nav-link" id="nav-contact">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" id="theme-toggle-main" aria-label="Toggle Theme"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg></button>
+        <a href="/admin/login" class="btn btn-outline btn-sm" id="nav-admin-login">Admin</a>
+        <button class="mobile-nav-toggle" id="mobile-menu-btn" aria-label="Open Navigation Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <section class="section-padding">
+    <div class="container" style="max-width: 800px;">
+      
+      <div class="catalog-header">
+        <span class="section-subtitle">Client Magic Link</span>
+        <h1 class="section-title">Order Fitting Status</h1>
+        <p class="section-description">
+          Real-time status updates and payment details for your bespoke reservation.
+        </p>
+      </div>
+
+      <div id="order-loading" class="catalog-state-msg" style="background-color: var(--bg-surface); border: 1px solid var(--border-color);">
+        <p class="text-gold">Retrieving order record...</p>
+      </div>
+
+      <div id="order-alert-container"></div>
+
+      <div id="order-result-card" style="display: none;">
+        <div class="tracking-result-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+              <span class="meta-item-label">Reference Code</span>
+              <h2 id="order-ref-code" style="font-size: 2rem; color: var(--accent-gold); font-family: var(--font-heading);">DTT-XXXXXX</h2>
+            </div>
+            <div>
+              <span id="order-status-badge" class="status-badge status-pending">PENDING</span>
+            </div>
+          </div>
+
+          <!-- Payment Link Highlight Box (If payment link provided) -->
+          <div id="payment-link-box" style="display: none; background-color: var(--bg-elevated); border: 1px solid var(--accent-gold); padding: 1.5rem; margin-bottom: 2rem; text-align: center;">
+            <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--accent-gold); display: block; margin-bottom: 0.5rem; font-weight: 600;">
+              Action Required: Order Payment
+            </span>
+            <p style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 1.25rem;">
+              Your order consultation has been reviewed. Please click below to complete your payment:
+            </p>
+            <a id="order-pay-btn" href="#" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+              Complete Order Payment
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </a>
+          </div>
+
+          <div class="tracking-grid">
+            <div>
+              <span class="meta-item-label">Requested Piece / Service</span>
+              <span id="order-product-name" class="meta-item-value">--</span>
+            </div>
+            <div>
+              <span class="meta-item-label">Category</span>
+              <span id="order-category" class="meta-item-value">--</span>
+            </div>
+            <div>
+              <span class="meta-item-label">Client Name</span>
+              <span id="order-client-name" class="meta-item-value">--</span>
+            </div>
+            <div>
+              <span class="meta-item-label">Scheduled Fitting Date</span>
+              <span id="order-date" class="meta-item-value">--</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem;">
+            <span class="meta-item-label">Delivery Address</span>
+            <p id="order-address" style="color: var(--text-primary); margin-top: 0.25rem;">--</p>
+          </div>
+
+          <!-- Pickup Details Box -->
+          <div id="order-pickup-box" style="display: none; background-color: var(--bg-elevated); border: 1px solid var(--accent-gold); padding: 1.25rem; margin-top: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--accent-gold); font-weight: 600; font-size: 0.9rem; margin-bottom: 0.75rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+              <span>Collection & Pickup Information</span>
+            </div>
+            <div style="display: grid; gap: 0.75rem; font-size: 0.9rem;">
+              <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top: 0.25rem; flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <div>
+                  <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Pickup Location / Park</span>
+                  <strong id="order-pickup-location" style="color: var(--text-primary);">--</strong>
+                </div>
+              </div>
+              <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top: 0.25rem; flex-shrink: 0;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                <div>
+                  <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Contact Number at Pickup</span>
+                  <strong id="order-pickup-contact" style="color: var(--text-primary);">--</strong>
+                </div>
+              </div>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.75rem; border-top: 1px dashed var(--border-color); padding-top: 0.5rem;">
+              Please call the contact number above when you arrive at the location to collect your package.
+            </p>
+          </div>
+
+          <div style="margin-top: 1.5rem;" id="order-notes-container">
+            <span class="meta-item-label">Fitting & Custom Notes</span>
+            <p id="order-notes" style="color: var(--text-secondary); margin-top: 0.25rem; font-style: italic;">--</p>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+          <a href="/collections" class="btn btn-outline btn-sm">Explore More Collections</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <a href="/" class="brand-logo footer-brand" id="footer-brand-logo">
+          <img src="/images/dupsys-logo-transparent-black.png" alt="Dupsy's Timeless Treasure" class="brand-logo-img">
+        </a>
+        <p>
+          Creating heirloom fine jewelry crafted with unyielding dedication to luxury, technique, and personal milestone moments.
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Navigation</h4>
+        <ul class="footer-links">
+          <li><a href="/" id="footer-link-home">Home</a></li>
+          <li><a href="/collections" id="footer-link-collections">Collections</a></li>
+          <li><a href="/booking" id="footer-link-booking">Book Fitting</a></li>
+          <li><a href="/track-order" id="footer-link-track">Track Order</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Information</h4>
+        <ul class="footer-links">
+          <li><a href="/about" id="footer-link-about">About Us</a></li>
+          <li><a href="/contact" id="footer-link-contact">Contact & Inquiry</a></li>
+          <li><a href="/admin/login" id="footer-link-admin">Admin Dashboard</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Store Hours</h4>
+        <p class="footer-hours-text">
+          Monday to Saturday: 10:00 AM - 6:00 PM<br>
+          Online Orders 24/7
+        </p>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <div>&copy; 2026 Dupsy's Timeless Treasure. All Rights Reserved.</div>
+      <div>Designed for Fine Jewelry Admirers.</div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchOrderByMagicLink();
+    });
+
+    async function fetchOrderByMagicLink() {
+      const loadingEl = document.getElementById('order-loading');
+      const cardEl = document.getElementById('order-result-card');
+      const alertEl = document.getElementById('order-alert-container');
+
+      let reference = '';
+      const pathParts = window.location.pathname.split('/');
+      const orderIdx = pathParts.indexOf('order');
+      if (orderIdx !== -1 && pathParts[orderIdx + 1]) {
+        reference = pathParts[orderIdx + 1];
+      }
+
+      if (!reference) {
+        const urlParams = new URLSearchParams(window.location.search);
+        reference = urlParams.get('ref') || urlParams.get('reference') || '';
+      }
+
+      if (!reference) {
+        loadingEl.style.display = 'none';
+        showAlert('order-alert-container', 'No booking reference code was found in the link. Please check your link or use the manual order lookup.', 'error');
+        return;
+      }
+
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        let endpoint = `/api/bookings/ref/${encodeURIComponent(reference)}`;
+
+        // If returning from Paystack checkout redirect, perform server-side transaction verification
+        if (urlParams.get('payment') === 'verify' || urlParams.get('trxref') || urlParams.get('simulated') === 'true') {
+          endpoint = `/api/paystack/verify/${encodeURIComponent(reference)}${window.location.search}`;
+        }
+
+        const res = await fetch(endpoint);
+        const data = await res.json();
+
+        loadingEl.style.display = 'none';
+
+        if (!res.ok) {
+          showAlert('order-alert-container', data.error || 'Unable to retrieve order status.', 'error');
+          return;
+        }
+
+        const booking = data.booking || data;
+
+        document.getElementById('order-ref-code').textContent = booking.reference;
+        document.getElementById('order-product-name').textContent = booking.product_name || 'Custom Consultation';
+        document.getElementById('order-category').textContent = (booking.category || 'Custom').toUpperCase();
+        document.getElementById('order-client-name').textContent = booking.full_name;
+        document.getElementById('order-date').textContent = booking.preferred_date;
+        document.getElementById('order-address').textContent = booking.address;
+        document.getElementById('order-notes').textContent = booking.notes || 'No specific notes recorded.';
+
+        const badge = document.getElementById('order-status-badge');
+        const status = (booking.status || 'pending').toLowerCase();
+        badge.textContent = status.toUpperCase();
+        badge.className = `status-badge status-${status}`;
+
+        // Payment status highlight
+        const paymentBox = document.getElementById('payment-link-box');
+        if (booking.payment_status === 'paid' || status === 'confirmed' || status === 'shipped' || status === 'delivered') {
+          paymentBox.style.display = 'block';
+          paymentBox.style.backgroundColor = 'var(--bg-elevated)';
+          paymentBox.style.borderColor = '#2e7d32';
+          paymentBox.innerHTML = `
+            <div style="color: #2e7d32; font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              Payment Verified & Booking Confirmed
+            </div>
+            <p style="font-size: 0.88rem; color: var(--text-primary); margin-bottom: 0.5rem;">
+              Thank you, ${escapeHtml(booking.full_name)}! Your payment of <strong>₦${(parseFloat(booking.amount || 0)).toLocaleString(undefined, {minimumFractionDigits: 2})}</strong> has been received upfront.
+            </p>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">
+              Paystack Ref: <strong style="color: var(--accent-gold);">${escapeHtml(booking.paystack_ref || booking.reference)}</strong>
+            </div>
+          `;
+        } else if (booking.payment_status === 'failed') {
+          paymentBox.style.display = 'block';
+          paymentBox.style.backgroundColor = '#fbe9e7';
+          paymentBox.style.borderColor = '#c62828';
+          paymentBox.innerHTML = `
+            <div style="color: #c62828; font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              Payment Attempt Failed or Unconfirmed
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-primary); margin-bottom: 1rem;">
+              Full payment upfront is required before fitting and dispatch. Please retry checkout.
+            </p>
+            <a href="/booking" class="btn btn-primary btn-sm">Re-initiate Booking Checkout</a>
+          `;
+        } else {
+          paymentBox.style.display = 'none';
+        }
+
+        const pickupBox = document.getElementById('order-pickup-box');
+        if (booking.pickup_location || booking.pickup_contact_number) {
+          document.getElementById('order-pickup-location').textContent = booking.pickup_location || 'Not specified';
+          document.getElementById('order-pickup-contact').textContent = booking.pickup_contact_number || 'Not specified';
+          pickupBox.style.display = 'block';
+        } else {
+          pickupBox.style.display = 'none';
+        }
+
+        cardEl.style.display = 'block';
+
+      } catch (err) {
+        console.error('Order fetch / render error:', err);
+        loadingEl.style.display = 'none';
+        showAlert('order-alert-container', err.message || 'Failed to connect to atelier server. Please try again later.', 'error');
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, function(m) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[m];
+      });
+    }
+  </script>
+</body>
+</html>

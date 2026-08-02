@@ -1,0 +1,9 @@
+{
+  "name": "dupsys-timeless-treasure",
+  "version": "1.0.0",
+  "description": "Dupsy's Timeless Treasure - Fine Jewelry Website",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js"
+  }
+}
