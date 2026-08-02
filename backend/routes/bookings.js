@@ -45,9 +45,8 @@ module.exports = function(supabase, memoryStore) {
 
   // Helper to construct Magic Link URL
   function getMagicLink(req, reference) {
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
-    const host = req.get('host') || 'localhost:5000';
-    return `${protocol}://${host}/order/${reference}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'https://dupsystimelesstreasure.netlify.app';
+    return `${frontendUrl}/order/${reference}`;
   }
 
   // 1. POST /api/bookings (Public - Create Booking)

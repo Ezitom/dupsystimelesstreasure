@@ -6,8 +6,13 @@ function getTransporter() {
   require('dotenv').config({ path: path.join(__dirname, '../.env'), override: true });
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = parseInt(process.env.SMTP_PORT || '465', 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const user = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER;
+  let pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_PASS;
+
+  if (pass) {
+    // Strip spaces if user pasted a Gmail App Password formatted as "abcd efgh ijkl mnop"
+    pass = pass.replace(/\s+/g, '');
+  }
 
   if (user && pass) {
     return nodemailer.createTransport({
@@ -22,15 +27,16 @@ function getTransporter() {
   }
 
   console.error(
-    '[Email] SMTP credentials not configured (SMTP_USER / SMTP_PASS are empty). ' +
-    'Email notifications will FAIL. Add credentials to .env.'
+    '[Email] SMTP credentials not configured (neither SMTP_USER/SMTP_PASS nor GMAIL_USER/GMAIL_APP_PASSWORD set). ' +
+    'Email notifications will FAIL. Add credentials to Render environment variables.'
   );
   return null;
 }
 
 function getDefaultFrom() {
   require('dotenv').config({ path: path.join(__dirname, '../.env'), override: true });
-  return process.env.EMAIL_FROM || '"Dupsy\'s Timeless Treasure" <oniebenezer1@gmail.com>';
+  const user = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER;
+  return process.env.EMAIL_FROM || (user ? `"Dupsy's Timeless Treasure" <${user}>` : '"Dupsy\'s Timeless Treasure" <oniebenezer1@gmail.com>');
 }
 
 async function sendMail(mailOptions) {
@@ -208,7 +214,7 @@ async function sendStatusUpdateEmail(booking, status, magicLink, pickupLocation,
  */
 async function sendContactFormEmail(contactData) {
   require('dotenv').config({ path: path.join(__dirname, '../.env'), override: true });
-  const adminEmail = process.env.ADMIN_EMAIL || process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER;
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || 'oniebenezer1@gmail.com';
   const phoneText = contactData.phone ? contactData.phone.trim() : 'Not provided';
 
   const html = `

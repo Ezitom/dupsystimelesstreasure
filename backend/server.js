@@ -372,6 +372,22 @@ app.delete('/api/products/:id', authenticateAdminToken, async (req, res) => {
 
 const { sendContactFormEmail } = require('./config/mailer');
 
+// Diagnostic Test Email Route
+app.get('/api/test-email', async (req, res) => {
+  try {
+    const result = await sendContactFormEmail({
+      name: 'Email Diagnostic Test',
+      email: 'test@example.com',
+      phone: '+234 800 000 0000',
+      subject: 'Email Notification Test',
+      message: 'This is a diagnostic email from Dupsy\'s Timeless Treasure server.'
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 4. Contact Route
 app.post('/api/contact', async (req, res) => {
   const { name, email, phone, subject, message } = req.body;
