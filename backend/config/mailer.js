@@ -14,24 +14,19 @@ function getTransporter() {
 
   if (user && pass) {
     const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-    // On cloud hosts like Render, port 465 (SSL) is blocked or drops packets.
-    // Port 587 with secure: false and requireTLS: true uses STARTTLS and works reliably.
     const port = parseInt(process.env.SMTP_PORT || '587', 10);
-    const isPort465 = port === 465;
 
     return nodemailer.createTransport({
       host: host,
-      port: isPort465 ? 587 : port, // Force 587 if defaulting to prevent port 465 cloud timeout
-      secure: false, // Must be false for 587 STARTTLS
-      requireTLS: true,
+      port: port,
+      secure: port === 465,
       auth: { user, pass },
       tls: {
-        rejectUnauthorized: false,
-        minVersion: 'TLSv1.2'
+        rejectUnauthorized: false
       },
-      connectionTimeout: 8000, // 8 seconds fast-fail
-      greetingTimeout: 8000,
-      socketTimeout: 12000
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000
     });
   }
 
