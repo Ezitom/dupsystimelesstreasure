@@ -13,8 +13,12 @@ function getTransporter() {
   }
 
   if (user && pass) {
-    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const port = parseInt(process.env.SMTP_PORT || '587', 10);
+    let host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    let defaultPort = '587';
+    if (host.includes('brevo') || host.includes('sendinblue')) {
+      defaultPort = '2525'; // Port 2525 unblocked on Render
+    }
+    const port = parseInt(process.env.SMTP_PORT || defaultPort, 10);
 
     return nodemailer.createTransport({
       host: host,
@@ -31,8 +35,8 @@ function getTransporter() {
   }
 
   console.error(
-    '[Email] SMTP credentials not configured (neither SMTP_USER/SMTP_PASS nor GMAIL_USER/GMAIL_APP_PASSWORD set). ' +
-    'Email notifications will FAIL. Add credentials to Render environment variables.'
+    '[Email] SMTP credentials not configured. ' +
+    'Add BREVO_API_KEY or SMTP_USER/SMTP_PASS to Render environment variables.'
   );
   return null;
 }
@@ -46,7 +50,46 @@ function getDefaultFrom() {
 async function sendMail(mailOptions) {
   require('dotenv').config({ path: path.join(__dirname, '../.env'), override: true });
 
-  // 1. Primary Cloud Provider Support: Resend API (HTTP Port 443 - Never blocked on Render)
+  // 1. Brevo REST API (HTTPS Port 443 - Never blocked on Render)
+  const brevoApiKey = process.env.BREVO_API_KEY || process.env.BREVO_KEY || process.env.SIB_API_KEY;
+  if (brevoApiKey) {
+    try {
+      const apiKey = brevoApiKey.trim();
+      const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || process.env.EMAIL_USER || 'oniebenezer1@gmail.com';
+      const senderName = process.env.BREVO_SENDER_NAME || 'Dupsy\'s Timeless Treasure';
+      const toEmail = Array.isArray(mailOptions.to) ? mailOptions.to[0] : mailOptions.to;
+
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: senderName, email: senderEmail },
+          to: [{ email: toEmail }],
+          subject: mailOptions.subject,
+          htmlContent: mailOptions.html
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.messageId) {
+        console.log(`[Brevo API Sent] ✓ To: ${mailOptions.to} | Subject: ${mailOptions.subject} | MsgID: ${data.messageId}`);
+        return { success: true, messageId: data.messageId };
+      } else {
+        const errDetail = data.message || JSON.stringify(data);
+        console.error(`[Brevo API Error] ✗ Failed to send to ${mailOptions.to}: ${errDetail}`);
+        return { success: false, error: errDetail };
+      }
+    } catch (err) {
+      console.error(`[Brevo API Exception] ✗ ${err.message}`);
+      return { success: false, error: err.message };
+    }
+  }
+
+  // 2. Resend API (HTTP Port 443)
   if (process.env.RESEND_API_KEY) {
     try {
       const apiKey = process.env.RESEND_API_KEY.trim();
@@ -63,8 +106,7 @@ async function sendMail(mailOptions) {
           from: fromAddr,
           to: toAddr,
           subject: mailOptions.subject,
-          html: mailOptions.html,
-          reply_to: mailOptions.replyTo
+          html: mailOptions.html
         })
       });
 
@@ -83,7 +125,7 @@ async function sendMail(mailOptions) {
     }
   }
 
-  // 2. Fallback: Nodemailer Transport (SMTP)
+  // 3. Nodemailer Transport (SMTP via Brevo / Custom SMTP / Gmail)
   const activeTransporter = getTransporter();
   
   if (!mailOptions.from) {
@@ -100,7 +142,7 @@ async function sendMail(mailOptions) {
       return { success: false, error: err.message };
     }
   } else {
-    const errMsg = `[Email] Cannot send to ${mailOptions.to}: No email credentials set. Add RESEND_API_KEY or SMTP_USER/SMTP_PASS in Render Environment Variables.`;
+    const errMsg = `[Email] Cannot send to ${mailOptions.to}: No email credentials set. Add BREVO_API_KEY, RESEND_API_KEY, or SMTP_USER/SMTP_PASS in Render Environment Variables.`;
     console.error(errMsg);
     return { success: false, error: errMsg };
   }
