@@ -49,6 +49,46 @@ function getDefaultFrom() {
 }
 
 async function sendMail(mailOptions) {
+  require('dotenv').config({ path: path.join(__dirname, '../.env'), override: true });
+
+  // 1. Primary Cloud Provider Support: Resend API (HTTP Port 443 - Never blocked on Render)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const apiKey = process.env.RESEND_API_KEY.trim();
+      const fromAddr = process.env.EMAIL_FROM || 'Dupsy\'s Timeless Treasure <onboarding@resend.dev>';
+      const toAddr = Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to];
+
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: fromAddr,
+          to: toAddr,
+          subject: mailOptions.subject,
+          html: mailOptions.html,
+          reply_to: mailOptions.replyTo
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.id) {
+        console.log(`[Resend API Sent] ✓ To: ${mailOptions.to} | Subject: ${mailOptions.subject} | ID: ${data.id}`);
+        return { success: true, messageId: data.id };
+      } else {
+        const errDetail = data.message || data.error || JSON.stringify(data);
+        console.error(`[Resend API Error] ✗ Failed to send to ${mailOptions.to}: ${errDetail}`);
+        return { success: false, error: errDetail };
+      }
+    } catch (err) {
+      console.error(`[Resend API Exception] ✗ ${err.message}`);
+      return { success: false, error: err.message };
+    }
+  }
+
+  // 2. Fallback: Nodemailer Transport (SMTP)
   const activeTransporter = getTransporter();
   
   if (!mailOptions.from) {
@@ -65,8 +105,7 @@ async function sendMail(mailOptions) {
       return { success: false, error: err.message };
     }
   } else {
-    // Hard failure — no mock, no silent swallow
-    const errMsg = `[Email] Cannot send to ${mailOptions.to}: SMTP transporter not initialised. Configure SMTP_USER and SMTP_PASS in .env.`;
+    const errMsg = `[Email] Cannot send to ${mailOptions.to}: No email credentials set. Add RESEND_API_KEY or SMTP_USER/SMTP_PASS in Render Environment Variables.`;
     console.error(errMsg);
     return { success: false, error: errMsg };
   }
