@@ -210,11 +210,11 @@ app.use('/api/bookings', bookingsRouter);
 const paystackRouter = require('./routes/paystack')(supabase, memoryStore);
 app.use('/api/paystack', paystackRouter);
 
-// 2c. Delivery Zones Route
+// 2c. Delivery Zones Routes (Public List + Admin CRUD)
 app.get('/api/delivery-zones', async (req, res) => {
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('delivery_zones').select('*').order('fee', { ascending: true });
+      const { data, error } = await supabase.from('delivery_zones').select('*').order('zone_name', { ascending: true });
       if (!error && data && data.length > 0) {
         return res.json(data);
       }
@@ -223,6 +223,107 @@ app.get('/api/delivery-zones', async (req, res) => {
     }
   }
   res.json(memoryStore.deliveryZones);
+});
+
+// POST /api/delivery-zones (Admin Only - Add Location / Zone)
+app.post('/api/delivery-zones', authenticateAdminToken, async (req, res) => {
+  const { zone_name, fee } = req.body;
+  if (!zone_name || fee === undefined || fee === null) {
+    return res.status(400).json({ error: 'Location name and fee are required.' });
+  }
+
+  const parsedFee = parseFloat(fee);
+  if (isNaN(parsedFee) || parsedFee < 0) {
+    return res.status(400).json({ error: 'Fee must be a valid non-negative number.' });
+  }
+
+  const zoneId = 'zone-' + zone_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || String(Date.now());
+  const newZone = {
+    id: zoneId,
+    zone_name: zone_name.trim(),
+    fee: parsedFee,
+    created_at: new Date().toISOString()
+  };
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('delivery_zones').insert([newZone]).select();
+      if (!error && data && data.length > 0) {
+        const idx = memoryStore.deliveryZones.findIndex(z => z.id === zoneId || z.zone_name.toLowerCase() === newZone.zone_name.toLowerCase());
+        if (idx !== -1) memoryStore.deliveryZones[idx] = data[0];
+        else memoryStore.deliveryZones.push(data[0]);
+        return res.status(201).json(data[0]);
+      }
+    } catch (err) {
+      console.warn('[Database Fallback] Delivery zone insert error:', err.message);
+    }
+  }
+
+  const existingIdx = memoryStore.deliveryZones.findIndex(z => z.id === zoneId || z.zone_name.toLowerCase() === newZone.zone_name.toLowerCase());
+  if (existingIdx !== -1) {
+    memoryStore.deliveryZones[existingIdx] = newZone;
+  } else {
+    memoryStore.deliveryZones.push(newZone);
+  }
+
+  res.status(201).json(newZone);
+});
+
+// PUT /api/delivery-zones/:id (Admin Only - Update Location / Zone)
+app.put('/api/delivery-zones/:id', authenticateAdminToken, async (req, res) => {
+  const { id } = req.params;
+  const { zone_name, fee } = req.body;
+
+  if (!zone_name || fee === undefined || fee === null) {
+    return res.status(400).json({ error: 'Location name and fee are required.' });
+  }
+
+  const parsedFee = parseFloat(fee);
+  if (isNaN(parsedFee) || parsedFee < 0) {
+    return res.status(400).json({ error: 'Fee must be a valid non-negative number.' });
+  }
+
+  const updatedData = {
+    zone_name: zone_name.trim(),
+    fee: parsedFee
+  };
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('delivery_zones').update(updatedData).eq('id', id).select();
+      if (!error && data && data.length > 0) {
+        const memIdx = memoryStore.deliveryZones.findIndex(z => z.id === id);
+        if (memIdx !== -1) memoryStore.deliveryZones[memIdx] = data[0];
+        return res.json(data[0]);
+      }
+    } catch (err) {
+      console.warn('[Database Fallback] Delivery zone update error:', err.message);
+    }
+  }
+
+  const memIdx = memoryStore.deliveryZones.findIndex(z => z.id === id);
+  if (memIdx === -1) {
+    return res.status(404).json({ error: 'Delivery location not found.' });
+  }
+
+  memoryStore.deliveryZones[memIdx] = { ...memoryStore.deliveryZones[memIdx], ...updatedData };
+  res.json(memoryStore.deliveryZones[memIdx]);
+});
+
+// DELETE /api/delivery-zones/:id (Admin Only - Delete Location / Zone)
+app.delete('/api/delivery-zones/:id', authenticateAdminToken, async (req, res) => {
+  const { id } = req.params;
+
+  if (supabase) {
+    try {
+      await supabase.from('delivery_zones').delete().eq('id', id);
+    } catch (err) {
+      console.warn('[Database Fallback] Delivery zone delete error:', err.message);
+    }
+  }
+
+  memoryStore.deliveryZones = memoryStore.deliveryZones.filter(z => z.id !== id);
+  res.json({ success: true, message: 'Delivery location deleted successfully.' });
 });
 
 

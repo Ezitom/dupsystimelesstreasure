@@ -95,6 +95,7 @@ function initDashboard() {
   const tabBtns = document.querySelectorAll('.admin-tab-btn');
   const tabBookings = document.getElementById('tab-content-bookings');
   const tabProducts = document.getElementById('tab-content-products');
+  const tabZones = document.getElementById('tab-content-delivery-zones');
 
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -105,11 +106,18 @@ function initDashboard() {
       if (targetTab === 'bookings') {
         tabBookings.style.display = 'block';
         tabProducts.style.display = 'none';
+        if (tabZones) tabZones.style.display = 'none';
         loadAdminBookings();
-      } else {
+      } else if (targetTab === 'products') {
         tabBookings.style.display = 'none';
         tabProducts.style.display = 'block';
+        if (tabZones) tabZones.style.display = 'none';
         loadAdminProducts();
+      } else if (targetTab === 'delivery-zones') {
+        tabBookings.style.display = 'none';
+        tabProducts.style.display = 'none';
+        if (tabZones) tabZones.style.display = 'block';
+        loadAdminDeliveryZones();
       }
     });
   });
@@ -117,8 +125,9 @@ function initDashboard() {
   // Load initial tab
   loadAdminBookings();
 
-  // Modal setup for Products
+  // Modal setup for Products & Delivery Zones
   initProductModal();
+  initZoneModal();
 }
 
 // --- BOOKINGS MANAGEMENT --- //
@@ -641,4 +650,189 @@ function escapeHtml(str) {
 function formatCurrency(amount) {
   const num = Number(amount) || 0;
   return '₦' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// --- DELIVERY ZONES MANAGEMENT --- //
+
+async function loadAdminDeliveryZones() {
+  const tableWrapper = document.getElementById('tab-content-delivery-zones');
+  const tbody = document.getElementById('zones-tbody');
+  if (!tableWrapper) return;
+
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem;">Loading delivery locations...</td></tr>`;
+  }
+
+  try {
+    const url = (typeof getApiUrl === 'function') ? getApiUrl('/api/delivery-zones') : '/api/delivery-zones';
+    const response = await fetch(url);
+
+    if (!response.ok) throw new Error('Failed to load delivery locations');
+    const contentType = response.headers.get('content-type') || '';
+    const zones = contentType.includes('application/json') ? await response.json() : [];
+
+    renderDeliveryZonesTable(zones);
+  } catch (err) {
+    console.error('Admin delivery zones fetch error:', err);
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--accent-gold); padding: 2rem;">Error loading delivery locations. Please refresh.</td></tr>`;
+    }
+  }
+}
+
+function renderDeliveryZonesTable(zones) {
+  const tbody = document.getElementById('zones-tbody');
+  if (!tbody) return;
+
+  if (!zones || zones.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">No delivery locations registered yet. Click "+ Add Location / Park" above to create one.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = zones.map(z => {
+    const createdDate = z.created_at ? new Date(z.created_at).toLocaleDateString() : 'N/A';
+    const zoneJson = JSON.stringify(z).replace(/'/g, "&apos;");
+    return `
+      <tr>
+        <td style="font-weight: 600; color: var(--text-primary);">${escapeHtml(z.zone_name)}</td>
+        <td style="color: var(--accent-gold); font-weight: 700;">${formatCurrency(z.fee)}</td>
+        <td style="font-size: 0.85rem; color: var(--text-muted);">${createdDate}</td>
+        <td>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-outline btn-sm btn-edit-zone" data-zone='${zoneJson}' style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">Edit</button>
+            <button class="btn btn-outline btn-sm btn-delete-zone" data-id="${z.id}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; border-color: #c62828; color: #c62828;">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // Attach event listeners
+  tbody.querySelectorAll('.btn-edit-zone').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const zoneData = JSON.parse(btn.getAttribute('data-zone').replace(/&apos;/g, "'"));
+      openZoneModal('edit', zoneData);
+    });
+  });
+
+  tbody.querySelectorAll('.btn-delete-zone').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      if (confirm('Are you sure you want to delete this delivery location?')) {
+        deleteDeliveryZone(id);
+      }
+    });
+  });
+}
+
+function initZoneModal() {
+  const modal = document.getElementById('zone-modal');
+  const closeBtn = document.getElementById('zone-modal-close');
+  const addBtn = document.getElementById('add-zone-btn');
+  const form = document.getElementById('zone-form');
+
+  if (!modal) return;
+
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      openZoneModal('add');
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      modal.classList.remove('active');
+    });
+  }
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.remove('active');
+    }
+  });
+
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const mode = document.getElementById('zone-modal-mode').value;
+      const zoneId = document.getElementById('zone-modal-id').value;
+      const zoneName = document.getElementById('zone-modal-name').value.trim();
+      const fee = document.getElementById('zone-modal-fee').value;
+
+      const payload = { zone_name: zoneName, fee: parseFloat(fee) };
+
+      try {
+        const token = localStorage.getItem('dtt_admin_token');
+        const endpoint = (mode === 'add') ? '/api/delivery-zones' : `/api/delivery-zones/${zoneId}`;
+        const url = (typeof getApiUrl === 'function') ? getApiUrl(endpoint) : endpoint;
+        const method = (mode === 'add') ? 'POST' : 'PUT';
+
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+        const data = contentType.includes('application/json') ? await response.json() : {};
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to save delivery location.');
+        }
+
+        modal.classList.remove('active');
+        showAlert('admin-dash-alert', `Delivery location "${zoneName}" saved successfully.`, 'success');
+        loadAdminDeliveryZones();
+      } catch (err) {
+        console.error('Zone save error:', err);
+        alert(err.message || 'Error saving delivery location.');
+      }
+    });
+  }
+}
+
+function openZoneModal(mode, zone = null) {
+  const modal = document.getElementById('zone-modal');
+  const title = document.getElementById('zone-modal-title');
+  const form = document.getElementById('zone-form');
+
+  if (!modal || !form) return;
+
+  document.getElementById('zone-modal-mode').value = mode;
+  document.getElementById('zone-modal-id').value = zone ? zone.id : '';
+
+  if (mode === 'add') {
+    title.innerText = 'Add Delivery Location';
+    form.reset();
+  } else {
+    title.innerText = 'Edit Delivery Location';
+    document.getElementById('zone-modal-name').value = zone.zone_name;
+    document.getElementById('zone-modal-fee').value = zone.fee;
+  }
+
+  modal.classList.add('active');
+}
+
+async function deleteDeliveryZone(id) {
+  try {
+    const token = localStorage.getItem('dtt_admin_token');
+    const endpoint = `/api/delivery-zones/${id}`;
+    const url = (typeof getApiUrl === 'function') ? getApiUrl(endpoint) : endpoint;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) throw new Error('Failed to delete delivery location');
+
+    showAlert('admin-dash-alert', 'Delivery location deleted successfully.', 'success');
+    loadAdminDeliveryZones();
+  } catch (err) {
+    console.error('Zone delete error:', err);
+    showAlert('admin-dash-alert', err.message, 'error');
+  }
 }
