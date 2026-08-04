@@ -152,6 +152,11 @@ async function sendMail(mailOptions) {
  * Send Booking Confirmation Email
  */
 async function sendBookingConfirmationEmail(booking, magicLink) {
+  const delZone = booking.delivery_zone || 'Standard Location';
+  const delFee = Number(booking.delivery_fee || 0);
+  const totalAmt = Number(booking.total_amount || booking.amount || 0);
+  const itemPrice = (totalAmt > delFee && delFee > 0) ? (totalAmt - delFee) : totalAmt;
+
   const html = `
     <div style="background-color: #0a0a0a; color: #f5f5f5; font-family: sans-serif; padding: 30px; border: 1px solid #d4af37;">
       <h2 style="color: #d4af37; font-size: 24px; margin-top: 0;">Dupsy's Timeless Treasure</h2>
@@ -160,12 +165,15 @@ async function sendBookingConfirmationEmail(booking, magicLink) {
       <div style="background-color: #141414; border: 1px solid #d4af37; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; color: #d4af37; letter-spacing: 2px; margin: 20px 0;">
         ${booking.reference}
       </div>
-      <p><strong>Booking Details:</strong></p>
+      <p><strong>Booking & Payment Details:</strong></p>
       <ul style="line-height: 1.8; color: #c7c7c7;">
         <li><strong style="color: #f5f5f5;">Jewelry Piece / Service:</strong> ${booking.product_name}</li>
         <li><strong style="color: #f5f5f5;">Category:</strong> ${booking.category}</li>
         <li><strong style="color: #f5f5f5;">Preferred Date:</strong> ${booking.preferred_date}</li>
-        <li><strong style="color: #f5f5f5;">Initial Status:</strong> PENDING</li>
+        <li><strong style="color: #f5f5f5;">Collection Price:</strong> ₦${itemPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</li>
+        <li><strong style="color: #f5f5f5;">Delivery Location / Zone:</strong> ${delZone}</li>
+        <li><strong style="color: #f5f5f5;">Delivery Fee:</strong> ₦${delFee.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</li>
+        <li><strong style="color: #d4af37;">Total Amount:</strong> <span style="color: #d4af37; font-weight: bold;">₦${totalAmt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></li>
         <li><strong style="color: #f5f5f5;">Delivery Address:</strong> ${booking.address}</li>
       </ul>
       <p style="margin-top: 20px;">You can view and track your booking status instantly via your personal magic link:</p>

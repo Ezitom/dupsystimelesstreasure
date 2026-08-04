@@ -1,0 +1,22 @@
+[
+  {
+    "id": "zone-a",
+    "zone_name": "Zone A",
+    "fee": 1500
+  },
+  {
+    "id": "zone-b",
+    "zone_name": "Zone B",
+    "fee": 2500
+  },
+  {
+    "id": "zone-c",
+    "zone_name": "Zone C",
+    "fee": 3500
+  },
+  {
+    "id": "zone-d",
+    "zone_name": "Zone D",
+    "fee": 5000
+  }
+]

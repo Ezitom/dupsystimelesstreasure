@@ -54,9 +54,32 @@ VALUES
     ('66666666-6666-6666-6666-666666666666', 'Bespoke Custom Atelier Piece', 'custom', 3500.00, 'Custom Gold & Selected Gemstones', '/images/custom-atelier.jpg', 'Commission a one of a kind masterpiece designed in collaboration with master goldsmith Dupsy.', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Migration: Add Paystack fields & pickup fields to bookings (safe to run on existing tables)
+-- Migration: Add Paystack fields, pickup fields & delivery fee fields to bookings (safe to run on existing tables)
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS pickup_location TEXT;
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS pickup_contact_number VARCHAR(100);
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'unpaid';
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS paystack_ref VARCHAR(100);
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS amount DECIMAL(10, 2) DEFAULT 0.00;
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS delivery_zone VARCHAR(100);
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS delivery_fee DECIMAL(10, 2) DEFAULT 0.00;
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS total_amount DECIMAL(10, 2) DEFAULT 0.00;
+
+-- Table: delivery_zones
+CREATE TABLE IF NOT EXISTS public.delivery_zones (
+    id VARCHAR(50) PRIMARY KEY,
+    zone_name VARCHAR(100) NOT NULL UNIQUE,
+    fee DECIMAL(10, 2) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.delivery_zones ENABLE ROW LEVEL SECURITY;
+
+-- Seed Data: Delivery Zones (Placeholder values)
+INSERT INTO public.delivery_zones (id, zone_name, fee)
+VALUES
+    ('zone-a', 'Zone A', 1500.00),
+    ('zone-b', 'Zone B', 2500.00),
+    ('zone-c', 'Zone C', 3500.00),
+    ('zone-d', 'Zone D', 5000.00)
+ON CONFLICT (id) DO NOTHING;
+

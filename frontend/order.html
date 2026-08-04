@@ -98,6 +98,14 @@
               <span class="meta-item-label">Scheduled Fitting Date</span>
               <span id="order-date" class="meta-item-value">--</span>
             </div>
+            <div>
+              <span class="meta-item-label">Delivery Location / Zone</span>
+              <span id="order-delivery-zone" class="meta-item-value">--</span>
+            </div>
+            <div>
+              <span class="meta-item-label">Delivery Fee</span>
+              <span id="order-delivery-fee" class="meta-item-value">--</span>
+            </div>
           </div>
 
           <div style="margin-top: 1.5rem;">
@@ -243,12 +251,16 @@
         }
 
         const booking = data.booking || data;
+        const delZone = booking.delivery_zone || 'Standard Location';
+        const delFee = Number(booking.delivery_fee || 0);
 
         document.getElementById('order-ref-code').textContent = booking.reference;
         document.getElementById('order-product-name').textContent = booking.product_name || 'Custom Consultation';
         document.getElementById('order-category').textContent = (booking.category || 'Custom').toUpperCase();
         document.getElementById('order-client-name').textContent = booking.full_name;
         document.getElementById('order-date').textContent = booking.preferred_date;
+        document.getElementById('order-delivery-zone').textContent = delZone;
+        document.getElementById('order-delivery-fee').textContent = '₦' + delFee.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('order-address').textContent = booking.address;
         document.getElementById('order-notes').textContent = booking.notes || 'No specific notes recorded.';
 

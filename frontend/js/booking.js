@@ -1,9 +1,15 @@
-// Booking Form Logic
+// Booking Form Logic & Zone-Based Delivery Fee Calculation
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('booking-form');
-  const resultBox = document.getElementById('booking-result-box');
   const alertContainer = document.getElementById('booking-alert-container');
+  const zoneSelect = document.getElementById('booking-delivery-zone');
+  const submitBtn = document.getElementById('btn-submit-booking');
+  const zonePrompt = document.getElementById('zone-select-prompt');
+
+  const collectionPriceEl = document.getElementById('breakdown-collection-price');
+  const deliveryFeeEl = document.getElementById('breakdown-delivery-fee');
+  const totalAmountEl = document.getElementById('breakdown-total-amount');
 
   if (!form) return;
 
@@ -29,11 +35,106 @@ document.addEventListener('DOMContentLoaded', () => {
     dateInput.setAttribute('min', today);
   }
 
+  // State Management
+  let collectionPrice = 3500.00; // Default bespoke price
+  let deliveryFee = 0.00;
+  let availableZones = [];
+
+  function safeFormatCurrency(amount) {
+    if (typeof formatCurrency === 'function') {
+      return formatCurrency(amount);
+    }
+    const num = Number(amount) || 0;
+    return '₦' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function updateBreakdown() {
+    if (collectionPriceEl) collectionPriceEl.innerText = safeFormatCurrency(collectionPrice);
+    if (deliveryFeeEl) deliveryFeeEl.innerText = safeFormatCurrency(deliveryFee);
+    if (totalAmountEl) totalAmountEl.innerText = safeFormatCurrency(collectionPrice + deliveryFee);
+  }
+
+  // Fetch product price if product_id is specified
+  if (productId) {
+    try {
+      const prodEndpoint = `/api/products/${productId}`;
+      const prodUrl = (typeof getApiUrl === 'function') ? getApiUrl(prodEndpoint) : prodEndpoint;
+      const res = await fetch(prodUrl);
+      if (res.ok) {
+        const prodData = await res.json();
+        if (prodData && prodData.price) {
+          collectionPrice = parseFloat(prodData.price);
+          if (productNameInput && (!productNameInput.value || productNameInput.value === 'Custom Design')) {
+            productNameInput.value = prodData.name;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch specific product price, using default:', e);
+    }
+  }
+
+  updateBreakdown();
+
+  // Initially disable button until zone selected
+  if (submitBtn) submitBtn.disabled = true;
+  if (zonePrompt) zonePrompt.style.display = 'block';
+
+  // Load Delivery Zones dynamically from backend API
+  try {
+    const zonesEndpoint = '/api/delivery-zones';
+    const zonesUrl = (typeof getApiUrl === 'function') ? getApiUrl(zonesEndpoint) : zonesEndpoint;
+    const response = await fetch(zonesUrl);
+    
+    if (response.ok) {
+      const contentType = response.headers.get('content-type') || '';
+      availableZones = contentType.includes('application/json') ? await response.json() : [];
+      
+      if (zoneSelect && availableZones.length > 0) {
+        zoneSelect.innerHTML = `<option value="" disabled selected>-- Select Delivery Location --</option>` +
+          availableZones.map(z => `
+            <option value="${escapeHtml(z.zone_name)}" data-fee="${z.fee}">
+              ${escapeHtml(z.zone_name)} (${safeFormatCurrency(z.fee)})
+            </option>
+          `).join('');
+      }
+    }
+  } catch (err) {
+    console.error('Error loading delivery zones:', err);
+  }
+
+  // Handle Zone Selection Change
+  if (zoneSelect) {
+    zoneSelect.addEventListener('change', (e) => {
+      const selectedOption = zoneSelect.options[zoneSelect.selectedIndex];
+      const feeVal = selectedOption ? parseFloat(selectedOption.getAttribute('data-fee')) : 0;
+      
+      if (!isNaN(feeVal) && zoneSelect.value) {
+        deliveryFee = feeVal;
+        updateBreakdown();
+        
+        // Enable submit button and hide prompt
+        if (submitBtn) submitBtn.disabled = false;
+        if (zonePrompt) zonePrompt.style.display = 'none';
+      } else {
+        deliveryFee = 0.00;
+        updateBreakdown();
+        if (submitBtn) submitBtn.disabled = true;
+        if (zonePrompt) zonePrompt.style.display = 'block';
+      }
+    });
+  }
+
+  // Handle Form Submission
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     alertContainer.innerHTML = '';
 
-    const submitBtn = form.querySelector('button[type="submit"]');
+    if (!zoneSelect || !zoneSelect.value) {
+      showAlert('booking-alert-container', 'Please select a delivery location before proceeding to payment.', 'error');
+      return;
+    }
+
     const originalBtnText = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = `
@@ -54,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
       email: document.getElementById('booking-email').value.trim(),
       address: document.getElementById('booking-address').value.trim(),
       nearest_park: nearestParkVal,
+      delivery_zone: zoneSelect.value,
       preferred_date: document.getElementById('booking-date').value,
       category: document.getElementById('booking-category').value,
       notes: document.getElementById('booking-notes').value.trim()

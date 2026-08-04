@@ -40,6 +40,8 @@ function authenticateAdminToken(req, res, next) {
   });
 }
 
+const defaultDeliveryZones = require('../config/deliveryZones.json');
+
 // Module export factory function to bind database/memory instance
 module.exports = function(supabase, memoryStore) {
 
@@ -51,7 +53,7 @@ module.exports = function(supabase, memoryStore) {
 
   // 1. POST /api/bookings (Public - Create Booking)
   router.post('/', async (req, res) => {
-    const { product_id, product_name, full_name, phone, email, address, nearest_park, preferred_date, category, notes } = req.body;
+    const { product_id, product_name, full_name, phone, email, address, nearest_park, delivery_zone, preferred_date, category, notes } = req.body;
 
     if (!full_name || !phone || !email || !address || !preferred_date) {
       return res.status(400).json({ error: 'Please provide all required fields.' });
@@ -61,6 +63,23 @@ module.exports = function(supabase, memoryStore) {
     const phoneValidation = validatePhoneNumber(phone);
     if (!phoneValidation.valid) {
       return res.status(400).json({ error: phoneValidation.error });
+    }
+
+    // Server-side Delivery Zone Lookup
+    let availableZones = memoryStore.deliveryZones || defaultDeliveryZones;
+    let authoritativeDeliveryFee = 0;
+    let selectedZoneName = delivery_zone ? String(delivery_zone).trim() : null;
+
+    if (selectedZoneName) {
+      const cleanZoneInput = selectedZoneName.toLowerCase();
+      const matchedZone = availableZones.find(z =>
+        (z.zone_name && z.zone_name.toLowerCase() === cleanZoneInput) ||
+        (z.id && z.id.toLowerCase() === cleanZoneInput)
+      );
+      if (matchedZone) {
+        authoritativeDeliveryFee = parseFloat(matchedZone.fee);
+        selectedZoneName = matchedZone.zone_name;
+      }
     }
 
     let ref = generateReferenceCode();
@@ -84,6 +103,9 @@ module.exports = function(supabase, memoryStore) {
       email,
       address,
       nearest_park: parkStr,
+      delivery_zone: selectedZoneName,
+      delivery_fee: authoritativeDeliveryFee,
+      total_amount: authoritativeDeliveryFee, // default total if unpaid consultation
       preferred_date,
       category: category || 'custom',
       notes: formattedNotes,
@@ -109,11 +131,14 @@ module.exports = function(supabase, memoryStore) {
           preferred_date: bookingData.preferred_date,
           category: bookingData.category,
           notes: bookingData.notes,
-          status: 'pending'
+          status: 'pending',
+          delivery_zone: bookingData.delivery_zone,
+          delivery_fee: bookingData.delivery_fee,
+          total_amount: bookingData.total_amount
         }]).select();
 
         if (!error && data && data.length > 0) {
-          createdBooking = data[0];
+          createdBooking = { ...bookingData, ...data[0] };
         }
       } catch (err) {
         console.warn('[Database Fallback] Booking insert error:', err.message);
@@ -180,6 +205,43 @@ module.exports = function(supabase, memoryStore) {
     const cleanRef = reference.trim().toUpperCase();
     const cleanId = identifier.trim().toLowerCase();
 
+    function isContactMatch(b) {
+      if (!b) return false;
+
+      // 1. Compare email
+      if (b.email && b.email.trim().toLowerCase() === cleanId) {
+        return true;
+      }
+
+      // 2. Compare phone number flexibly
+      if (b.phone) {
+        const storedDigits = String(b.phone).replace(/\D/g, '');
+        const inputDigits = cleanId.replace(/\D/g, '');
+
+        if (inputDigits && inputDigits.length >= 4) {
+          // Exact digit match or substring match
+          if (storedDigits === inputDigits || storedDigits.includes(inputDigits) || inputDigits.includes(storedDigits)) {
+            return true;
+          }
+
+          // Compare last 9 or 10 digits to handle country code vs leading zero differences (e.g. +2348012345678 vs 08012345678)
+          const storedTail9 = storedDigits.slice(-9);
+          const inputTail9 = inputDigits.slice(-9);
+          if (storedTail9 && inputTail9 && storedTail9 === inputTail9) {
+            return true;
+          }
+
+          const storedTail10 = storedDigits.slice(-10);
+          const inputTail10 = inputDigits.slice(-10);
+          if (storedTail10 && inputTail10 && storedTail10 === inputTail10) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
     if (supabase) {
       try {
         const { data, error } = await supabase
@@ -188,11 +250,7 @@ module.exports = function(supabase, memoryStore) {
           .eq('reference', cleanRef);
 
         if (!error && data && data.length > 0) {
-          const match = data.find(b =>
-            b.email.toLowerCase() === cleanId ||
-            b.phone.replace(/\s+/g, '').includes(cleanId.replace(/\s+/g, ''))
-          );
-
+          const match = data.find(isContactMatch);
           if (match) return res.json(match);
         }
       } catch (err) {
@@ -201,8 +259,7 @@ module.exports = function(supabase, memoryStore) {
     }
 
     const booking = memoryStore.bookings.find(b =>
-      b.reference === cleanRef &&
-      (b.email.toLowerCase() === cleanId || b.phone.replace(/\s+/g, '').includes(cleanId.replace(/\s+/g, '')))
+      b.reference === cleanRef && isContactMatch(b)
     );
 
     if (booking) return res.json(booking);

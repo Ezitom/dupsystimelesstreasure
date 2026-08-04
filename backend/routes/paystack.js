@@ -61,6 +61,8 @@ function verifyPaystackSignature(req) {
   return expectedHash === signature;
 }
 
+const defaultDeliveryZones = require('../config/deliveryZones.json');
+
 module.exports = function(supabase, memoryStore) {
 
   function getMagicLink(req, reference) {
@@ -77,11 +79,15 @@ module.exports = function(supabase, memoryStore) {
 
   // 2. POST /api/paystack/initialize - Create booking record & initialize Paystack checkout
   router.post('/initialize', async (req, res) => {
-    const { product_id, product_name, full_name, phone, email, address, nearest_park, preferred_date, category, notes } = req.body;
+    const { product_id, product_name, full_name, phone, email, address, nearest_park, delivery_zone, preferred_date, category, notes } = req.body;
 
     // Validation
     if (!full_name || !phone || !email || !address || !preferred_date) {
       return res.status(400).json({ error: 'Please provide all required fields (Name, Phone, Email, Delivery Address, Date).' });
+    }
+
+    if (!delivery_zone) {
+      return res.status(400).json({ error: 'Please select a delivery location.' });
     }
 
     if (address.trim().length < 5) {
@@ -93,7 +99,31 @@ module.exports = function(supabase, memoryStore) {
       return res.status(400).json({ error: phoneValidation.error });
     }
 
-    // Determine Product Price
+    // Server-side Delivery Zone & Fee Lookup (Never trust frontend fee value)
+    let availableZones = memoryStore.deliveryZones || defaultDeliveryZones;
+    if (supabase) {
+      try {
+        const { data: dbZones } = await supabase.from('delivery_zones').select('*');
+        if (dbZones && dbZones.length > 0) {
+          availableZones = dbZones;
+        }
+      } catch (e) {}
+    }
+
+    const cleanZoneInput = String(delivery_zone).trim().toLowerCase();
+    const matchedZone = availableZones.find(z =>
+      (z.zone_name && z.zone_name.toLowerCase() === cleanZoneInput) ||
+      (z.id && z.id.toLowerCase() === cleanZoneInput)
+    );
+
+    if (!matchedZone) {
+      return res.status(400).json({ error: 'Selected delivery location is invalid. Please select a valid delivery location.' });
+    }
+
+    const authoritativeDeliveryFee = parseFloat(matchedZone.fee);
+    const selectedZoneName = matchedZone.zone_name;
+
+    // Determine Product Price (Collection Price)
     let price = 3500.00; // default for bespoke custom pieces
     let selectedProductName = product_name || 'Custom Jewelry Atelier';
 
@@ -117,6 +147,9 @@ module.exports = function(supabase, memoryStore) {
       if (match) price = parseFloat(match.price);
     }
 
+    const collectionPrice = price;
+    const totalAmount = collectionPrice + authoritativeDeliveryFee;
+
     // Generate unique reference
     let ref = generateReferenceCode();
     while (memoryStore.bookings.some(b => b.reference === ref)) {
@@ -139,13 +172,16 @@ module.exports = function(supabase, memoryStore) {
       email: email.trim().toLowerCase(),
       address: address.trim(),
       nearest_park: parkStr,
+      delivery_zone: selectedZoneName,
+      delivery_fee: authoritativeDeliveryFee,
+      total_amount: totalAmount,
       preferred_date,
       category: category || 'custom',
       notes: formattedNotes,
       status: 'pending',
       payment_status: 'unpaid',
       paystack_ref: null,
-      amount: price,
+      amount: totalAmount,
       pickup_location: parkStr || null,
       pickup_contact_number: null,
       created_at: new Date().toISOString()
@@ -169,7 +205,10 @@ module.exports = function(supabase, memoryStore) {
           notes: bookingData.notes,
           status: 'pending',
           payment_status: 'unpaid',
-          amount: bookingData.amount
+          amount: bookingData.amount,
+          delivery_zone: bookingData.delivery_zone,
+          delivery_fee: bookingData.delivery_fee,
+          total_amount: bookingData.total_amount
         }]).select();
 
         if (error) {
@@ -185,14 +224,15 @@ module.exports = function(supabase, memoryStore) {
             preferred_date: bookingData.preferred_date,
             category: bookingData.category,
             notes: bookingData.notes,
-            status: 'pending'
+            status: 'pending',
+            amount: bookingData.amount
           }]).select();
           data = fallbackRes.data;
           error = fallbackRes.error;
         }
 
         if (!error && data && data.length > 0) {
-          createdBooking = data[0];
+          createdBooking = { ...bookingData, ...data[0] };
         }
       } catch (err) {
         console.warn('[Paystack Init] Supabase insert exception:', err.message);
@@ -221,7 +261,7 @@ module.exports = function(supabase, memoryStore) {
     }
 
     try {
-      const amountInKobo = Math.round(price * 100);
+      const amountInKobo = Math.round(totalAmount * 100);
       const paystackRes = await paystackApiCall('/transaction/initialize', 'POST', {
         email: createdBooking.email,
         amount: amountInKobo,
@@ -232,7 +272,10 @@ module.exports = function(supabase, memoryStore) {
           product_name: createdBooking.product_name,
           full_name: createdBooking.full_name,
           address: createdBooking.address,
-          phone: createdBooking.phone
+          phone: createdBooking.phone,
+          delivery_zone: createdBooking.delivery_zone,
+          delivery_fee: createdBooking.delivery_fee,
+          total_amount: createdBooking.total_amount
         }
       });
 

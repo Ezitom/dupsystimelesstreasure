@@ -108,13 +108,41 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label" for="booking-delivery-zone">Delivery Location / Zone</label>
+          <select id="booking-delivery-zone" name="delivery_zone" class="form-control" required>
+            <option value="" disabled selected>-- Select Delivery Location --</option>
+          </select>
+        </div>
+
+        <div class="checkout-breakdown-card" id="checkout-breakdown-card" style="background-color: var(--bg-surface-alt); border: 1px solid var(--border-color); padding: 1.25rem; margin-bottom: 1.5rem;">
+          <h4 style="font-family: var(--font-heading); font-size: 1.05rem; color: var(--accent-gold); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            Payment Summary Breakdown
+          </h4>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.9rem;">
+            <span style="color: var(--text-secondary);">Collection Price:</span>
+            <span id="breakdown-collection-price" style="font-weight: 600; color: var(--text-primary);">₦0.00</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.9rem;">
+            <span style="color: var(--text-secondary);">Delivery Fee:</span>
+            <span id="breakdown-delivery-fee" style="font-weight: 600; color: var(--text-primary);">₦0.00</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding-top: 0.6rem; border-top: 1px dashed var(--border-color); font-size: 1.05rem; font-weight: 700;">
+            <span style="color: var(--text-primary);">Total Amount:</span>
+            <span id="breakdown-total-amount" style="color: var(--accent-gold);">₦0.00</span>
+          </div>
+        </div>
+
+        <div class="form-group">
           <label class="form-label" for="booking-notes">Special Instructions or Sizing Notes</label>
           <textarea id="booking-notes" name="notes" class="form-control" placeholder="Provide ring sizes, preferred gold carat, custom engraving text, or specific appointment requests..."></textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-full" id="btn-submit-booking">
+        <button type="submit" class="btn btn-primary btn-full" id="btn-submit-booking" disabled>
           Proceed to Checkout (Paystack)
         </button>
+        <p id="zone-select-prompt" style="color: var(--accent-gold); font-size: 0.85rem; text-align: center; margin-top: 0.75rem; font-weight: 500;">
+          Select a delivery location to continue.
+        </p>
       </form>
 
     </div>

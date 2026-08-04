@@ -190,11 +190,20 @@ async function sendWhatsAppMessage(toPhoneNumber, messageBody) {
  * Trigger: immediately after POST /api/bookings
  */
 async function notifyBookingReceived(booking, trackingLink) {
+  const delZone = booking.delivery_zone || 'Standard Location';
+  const delFee = Number(booking.delivery_fee || 0);
+  const totalAmt = Number(booking.total_amount || booking.amount || 0);
+  const itemPrice = (totalAmt > delFee && delFee > 0) ? (totalAmt - delFee) : totalAmt;
+
   const body =
     `*Dupsy's Timeless Treasure: Booking Received*\n\n` +
     `Hello ${booking.full_name}, we've received your booking request for *${booking.product_name}*.\n\n` +
     `*Reference:* ${booking.reference}\n` +
     `*Preferred Date:* ${booking.preferred_date}\n` +
+    `*Item Price:* ₦${itemPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n` +
+    `*Delivery Zone:* ${delZone}\n` +
+    `*Delivery Fee:* ₦${delFee.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n` +
+    `*Total Amount:* ₦${totalAmt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n` +
     `*Status:* Pending Review\n\n` +
     `Our atelier team will review your request shortly and reach out with next steps.\n\n` +
     `Track your order anytime: ${trackingLink}`;
@@ -207,9 +216,15 @@ async function notifyBookingReceived(booking, trackingLink) {
  * Trigger: PATCH /api/bookings/:id/payment-link
  */
 async function notifyPaymentLinkSent(booking, paymentLink, trackingLink) {
+  const delZone = booking.delivery_zone || 'Standard Location';
+  const delFee = Number(booking.delivery_fee || 0);
+  const totalAmt = Number(booking.total_amount || booking.amount || 0);
+
   const body =
     `*Dupsy's Timeless Treasure: Payment Required*\n\n` +
     `Hello ${booking.full_name}, great news! Your booking for *${booking.product_name}* (Ref: ${booking.reference}) has been approved.\n\n` +
+    `*Delivery Zone:* ${delZone} (Fee: ₦${delFee.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})\n` +
+    `*Total Amount Due:* ₦${totalAmt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n\n` +
     `To confirm your order, please complete your payment using the secure link below:\n` +
     `Payment Link: ${paymentLink}\n\n` +
     `Once payment is received, we'll begin crafting your piece.\n\n` +
@@ -223,9 +238,19 @@ async function notifyPaymentLinkSent(booking, paymentLink, trackingLink) {
  * Trigger: PATCH /api/bookings/:id/status → status = 'confirmed'
  */
 async function notifyPaymentConfirmed(booking, trackingLink) {
+  const delZone = booking.delivery_zone || 'Standard Location';
+  const delFee = Number(booking.delivery_fee || 0);
+  const totalAmt = Number(booking.total_amount || booking.amount || 0);
+  const itemPrice = (totalAmt > delFee && delFee > 0) ? (totalAmt - delFee) : totalAmt;
+
   const body =
     `*Dupsy's Timeless Treasure: Payment Confirmed*\n\n` +
-    `Hello ${booking.full_name}, your payment for *${booking.product_name}* (Ref: ${booking.reference}) has been received and confirmed.\n\n` +
+    `Hello ${booking.full_name}, your payment for *${booking.product_name}* (Ref: ${booking.reference}) has been received and confirmed!\n\n` +
+    `*Payment Breakdown:*\n` +
+    `• Piece Price: ₦${itemPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n` +
+    `• Delivery Zone: ${delZone}\n` +
+    `• Delivery Fee: ₦${delFee.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n` +
+    `• *Total Paid:* ₦${totalAmt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n\n` +
     `Our master goldsmith has begun work on your piece. We'll notify you as soon as it ships.\n\n` +
     `Track your order: ${trackingLink}`;
 

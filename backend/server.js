@@ -160,7 +160,8 @@ const memoryStore = {
       created_at: new Date(Date.now() - 86400000 * 2).toISOString()
     }
   ],
-  messages: []
+  messages: [],
+  deliveryZones: require('./config/deliveryZones.json')
 };
 
 // Authentication Middleware for Products/Auth
@@ -208,6 +209,22 @@ app.use('/api/bookings', bookingsRouter);
 // 2b. Paystack Router
 const paystackRouter = require('./routes/paystack')(supabase, memoryStore);
 app.use('/api/paystack', paystackRouter);
+
+// 2c. Delivery Zones Route
+app.get('/api/delivery-zones', async (req, res) => {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('delivery_zones').select('*').order('fee', { ascending: true });
+      if (!error && data && data.length > 0) {
+        return res.json(data);
+      }
+    } catch (err) {
+      console.warn('[Database Fallback] Delivery zones fetch error:', err.message);
+    }
+  }
+  res.json(memoryStore.deliveryZones);
+});
+
 
 // Eagerly initialise Twilio client at startup to surface credential errors immediately
 require('./services/whatsappService').sendWhatsAppMessage; // triggers getTwilioClient() on first real send
